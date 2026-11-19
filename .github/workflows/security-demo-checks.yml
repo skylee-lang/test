@@ -1,0 +1,60 @@
+name: Security demo checks
+on:
+  pull_request:
+    paths:
+      - "functions/**"
+      - "migrations/**"
+      - "security-demo/**"
+      - ".github/workflows/security-demo-checks.yml"
+  push:
+    branches:
+      - "test/cloudflare-free-security-v1"
+    paths:
+      - "functions/**"
+      - "migrations/**"
+      - "security-demo/**"
+      - ".github/workflows/security-demo-checks.yml"
+permissions:
+  contents: read
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          for f in $(find functions -type f -name '*.js'); do
+            node --check "$f"
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Parser(HTMLParser): pass
+          Parser().feed(Path('security-demo/index.html').read_text())
+          print('demo HTML parsed')
+          PY
+      - name: Check SQL migrations and sample privacy
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          from pathlib import Path
+          db = sqlite3.connect(':memory:')
+          for file in sorted(Path('migrations').glob('*.sql')):
+              db.executescript(file.read_text())
+          assert db.execute("select count(*) from listings").fetchone()[0] == 4
+          assert db.execute("select count(*) from listings where status='진행중'").fetchone()[0] == 3
+          assert db.execute("select count(*) from listings where id='DEMO-OLD' and status='진행중'").fetchone()[0] == 0
+          print('D1-compatible schema and fictional test fixtures parsed')
+          PY
+      - name: Check no plaintext keys in new API
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = list(Path('functions').rglob('*.js'))
+          assert files
+          for f in files:
+              s = f.read_text()
+              assert 'script.google.com/macros/s/' not in s, f
+              assert 'docs.google.com/spreadsheets/d/' not in s, f
+          print('No original direct Google endpoints embedded in new API')
+          PY
