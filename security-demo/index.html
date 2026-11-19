@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>와방 무료 보안 API 테스트</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;color:#11213a;background:#f0f7fd}
+*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:780px;margin:auto}
+h1{font-size:1.6rem;margin:0 0 6px}h2{font-size:1.1rem;margin:0 0 15px}
+small,.muted{color:#536579}section{background:#fff;border:1px solid #dce9f4;border-radius:14px;padding:20px;margin:18px 0}
+button{cursor:pointer;background:#007cc3;color:white;border:0;border-radius:8px;padding:11px 16px;font:inherit}
+button:disabled{background:#a0b5c3;cursor:not-allowed}input,textarea{padding:10px;border:1px solid #b9cee2;border-radius:8px;font:inherit;max-width:100%}
+textarea{width:100%;resize:vertical}#list article{border-top:1px solid #dce9f4;padding:14px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.alert{background:#fff5e7;border:1px solid #f5cf90;border-radius:10px;padding:12px;margin:14px 0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eff5fa;padding:12px;border-radius:8px;font-size:12px}#turnstile{margin:16px 0}
+</style>
+</head>
+<body><main>
+<header><h1>와방 무료 보안 시스템 — 테스트</h1><div class="muted">Cloudflare Pages Functions · Turnstile · D1 / 실제 와방 운영 사이트와 분리</div></header>
+<div class="alert"><strong>가상 데이터 전용:</strong> 이 테스트 화면에 실제 고객 정보, 실매물 또는 비밀번호를 입력하지 마세요. Cloudflare Pages에 연결하기 전 GitHub Pages에서는 API가 작동하지 않습니다.</div>
+<section><h2>1. 보안 설정 및 입장</h2><p id="config">서버 연결 확인 중...</p><p id="status">인증 상태 확인 중...</p>
+<div id="turnstile"></div><button id="sessionBtn" type="button" disabled>사람 인증 후 30분 입장</button></section>
+<section><h2>2. 매물 목록</h2><div class="row"><input id="search" placeholder="동네·유형 검색 (가상 데이터)"><button id="listBtn" type="button">목록 요청</button><button id="nextBtn" type="button" disabled>다음 페이지</button></div><div id="list" aria-live="polite"></div></section>
+<section><h2>3. 상세 정보</h2><pre id="detail">목록에서 '상세보기'를 선택하세요.</pre></section>
+<section><h2>4. 가상 문의 저장</h2><p class="muted">D1에 가상 매물 ID와 테스트 메모만 저장합니다. 카카오톡이나 실사용 Google Sheets로 전송되지 않습니다.</p>
+<div class="row"><input id="listingId" placeholder="예: DEMO-001"><button type="button" id="sendBtn">테스트 문의 1회 저장</button></div><textarea id="note" rows="3" maxlength="1200" placeholder="테스트 메모 (실제 개인정보 입력 금지)"></textarea><pre id="inquiryResult"></pre></section>
+<section><h2>5. 처리 결과 / 오류</h2><pre id="log">대기 중</pre></section>
+</main>
+<script>
+let siteKey="",verifiedToken="",page=1,next=null;
+const $=id=>document.getElementById(id);
+function log(message){$("log").textContent=typeof message==="string"?message:JSON.stringify(message,null,2)}
+async function req(path,options){
+  const res=await fetch(path,{credentials:"same-origin",...options});
+  const obj=await res.json().catch(()=>({ok:false,error:"INVALID_SERVER_RESPONSE"}));
+  if(!res.ok)throw new Error(obj.error||"HTTP "+res.status);
+  return obj;
+}
+async function loadSettings(){
+  try{
+    const config=await req("/api/config");
+    siteKey=config.siteKey;
+    $("config").textContent=config.ready?"서버 설정 연결됨":"서버 미설정: Cloudflare에서 D1·Turnstile·SESSION_SECRET 설정 필요";
+    if(siteKey){
+      const s=document.createElement("script");
+      s.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.onload=()=>window.turnstile.render("#turnstile",{sitekey:siteKey,callback:token=>{
+        verifiedToken=token;$("sessionBtn").disabled=false;
+      },"expired-callback":()=>{verifiedToken="";$("sessionBtn").disabled=true}});
+      document.head.appendChild(s);
+    }
+    const check=await req("/api/session");
+    $("status").textContent=check.authenticated?"입장 중 (세션 활성)":"입장권 없음";
+  }catch(e){$("config").textContent="API 연결 실패: "+e.message;$("status").textContent="Cloudflare Pages 배포가 필요한 테스트입니다."}
+}
+$("sessionBtn").onclick=async()=>{
+  if(!verifiedToken)return;
+  $("sessionBtn").disabled=true;
+  try{const r=await req("/api/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:verifiedToken})});
+    $("status").textContent="인증 성공: "+r.expiresIn/60+"분 입장"; log(r);
+  }catch(e){log("인증 실패: "+e.message)}
+  verifiedToken="";if(window.turnstile)window.turnstile.reset();
+};
+async function listings(n=1){
+  try{
+    const q=$("search").value.trim();const data=await req("/api/listings?page="+n+"&q="+encodeURIComponent(q));
+    page=data.page;next=data.nextPage;$("nextBtn").disabled=!next;
+    const holder=$("list");holder.replaceChildren();
+    if(!data.items.length){holder.textContent="조건에 맞는 가상 매물이 없습니다.";return}
+    for(const item of data.items){
+      const a=document.createElement("article");
+      const title=document.createElement("strong");title.textContent=[item.id,item.area,item.type,item.deal].join(" · ");
+      const p=document.createElement("p");p.textContent="보증금 "+item.deposit+"만원 / 월 "+item.monthly_rent+"만원";
+      const b=document.createElement("button");b.textContent="상세보기";
+      b.onclick=()=>details(item.id);
+      a.append(title,p,b);holder.append(a);
+    }
+  }catch(e){log("목록 요청 실패: "+e.message)}
+}
+async function details(id){
+  try{const obj=await req("/api/listings/"+encodeURIComponent(id));
+    $("detail").textContent=JSON.stringify(obj.item,null,2);$("listingId").value=id;
+  }catch(e){log("상세 요청 실패: "+e.message)}
+}
+$("listBtn").onclick=()=>listings(1);
+$("nextBtn").onclick=()=>{if(next)listings(next)};
+$("sendBtn").onclick=async()=>{
+  const id=$("listingId").value.trim();
+  const note=$("note").value;
+  if(!id){log("매물 ID를 선택하세요.");return}
+  const idempotencyKey=crypto.randomUUID();
+  try{const result=await req("/api/inquiries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:[id],note,idempotencyKey})});
+    $("inquiryResult").textContent=JSON.stringify(result,null,2);log("가상 문의 저장 성공");
+  }catch(e){log("저장 실패: "+e.message)}
+};
+loadSettings();
+</script>
+</body>
+</html>
