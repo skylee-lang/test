@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!-- ⚠ 이 파일은 tools/build_assets.py 로 만든 빌드본이에요. 고칠 때는 index.src.html 를 고치고 다시 빌드하세요. -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>와방 | 공인중개사 이하늘 - 자동 매물 접수 챗봇</title>
+
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','Noto Sans KR','Roboto','Helvetica Neue','Segoe UI','sans-serif'] },
+            colors: {
+              brand: {
+                50: '#F0F9FF',
+                100: '#E0F2FE',
+                200: '#BAE6FD',
+                500: '#0EA5E9',
+                600: '#0284C7',
+                700: '#0369A1',
+              }
+            }
+          }
+        }
+      };
+    }
+  </script>
+
+  <style>
+    html {
+      -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+      font-size: clamp(14px, 3.9vw, 16px); /* 폰 폭에 맞춰 전체 크기 자동 조절 */
+    }
+    /* 아이폰은 입력창 글자가 16px 미만이면 화면이 확대되어 잘려 보이므로 고정 */
+    #userInput { font-size: 16px !important; }
+    /* 화면 높이: 구형 브라우저(100vh) → dvh → JS로 실제 보이는 높이(키보드 포함)로 갱신 */
+    :root { --app-h: 100vh; }
+    @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
+    html, body { height: 100%; }
+    .app-h { height: var(--app-h); min-height: -webkit-fill-available; }
+    body {
+      background-color: #E2EEF8;
+      color: #0F172A;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(10px) scale(0.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .msg-anim {
+      animation: popIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes bounceDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+    .typing-dot {
+      animation: bounceDot 1.2s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    /* 기기 기본 한글 글꼴: 아이폰·맥(애플 SD 고딕) / 갤럭시(삼성 기본·Noto) / 윈도우(맑은 고딕) */
+  html,body,button,input,textarea,select{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Noto Sans KR",Roboto,"Helvetica Neue","Segoe UI",sans-serif}
+</style>
+<style id="icon-build">@font-face{font-family:"Phosphor-Bold";src:url(data:font/woff;base64,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) format("woff");font-weight:normal;font-style:normal;font-display:block}
+.ph-bold {  font-family: "Phosphor-Bold" !important; speak: never; font-style: normal; font-weight: normal; font-variant: normal; text-transform: none; line-height: 1;  letter-spacing: 0; -webkit-font-feature-settings: "liga"; -moz-font-feature-settings: "liga=1"; -moz-font-feature-settings: "liga"; -ms-font-feature-settings: "liga" 1; font-feature-settings: "liga"; -webkit-font-variant-ligatures: discretionary-ligatures; font-variant-ligatures: discretionary-ligatures;  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.ph-bold.ph-arrow-right:before { content: "\e06c"; }
+.ph-bold.ph-arrow-u-up-left:before { content: "\e08a"; }
+.ph-bold.ph-chat-circle-dots:before { content: "\e16c"; }
+.ph-bold.ph-chat-teardrop-text:before { content: "\e178"; }
+.ph-bold.ph-check-circle:before { content: "\e184"; }
+.ph-bold.ph-house-line:before { content: "\e2c4"; }
+.ph-bold.ph-paper-plane-right:before { content: "\e396"; }
+.ph-bold.ph-paper-plane-tilt:before { content: "\e398"; }
+.ph-bold.ph-paw-print:before { content: "\e648"; }
+.ph-bold.ph-share-network:before { content: "\e408"; }
+.ph-bold.ph-x:before { content: "\e4f6"; }
+@font-face{font-family:"Phosphor-Fill";src:url(data:font/woff;base64,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) format("woff");font-weight:normal;font-style:normal;font-display:block}
+.ph-fill {  font-family: "Phosphor-Fill" !important; speak: never; font-style: normal; font-weight: normal; font-variant: normal; text-transform: none; line-height: 1;  letter-spacing: 0; -webkit-font-feature-settings: "liga"; -moz-font-feature-settings: "liga=1"; -moz-font-feature-settings: "liga"; -ms-font-feature-settings: "liga" 1; font-feature-settings: "liga"; -webkit-font-variant-ligatures: discretionary-ligatures; font-variant-ligatures: discretionary-ligatures;  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.ph-fill.ph-arrow-right:before { content: "\e06c"; }
+.ph-fill.ph-arrow-u-up-left:before { content: "\e08a"; }
+.ph-fill.ph-chat-circle-dots:before { content: "\e16c"; }
+.ph-fill.ph-chat-teardrop-text:before { content: "\e178"; }
+.ph-fill.ph-check-circle:before { content: "\e184"; }
+.ph-fill.ph-house-line:before { content: "\e2c4"; }
+.ph-fill.ph-paper-plane-right:before { content: "\e396"; }
+.ph-fill.ph-paper-plane-tilt:before { content: "\e398"; }
+.ph-fill.ph-paw-print:before { content: "\e648"; }
+.ph-fill.ph-share-network:before { content: "\e408"; }
+.ph-fill.ph-x:before { content: "\e4f6"; }</style>
+<style id="tw-build">*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:-apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, 맑은 고딕, Noto Sans KR, Roboto, Helvetica Neue, Segoe UI, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.left-1\/2{left:50%}.top-24{top:6rem}.z-20{z-index:20}.z-50{z-index:50}.z-\[60\]{z-index:60}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.ml-0\.5{margin-left:0.125rem}.ml-1{margin-left:0.25rem}.mt-0\.5{margin-top:0.125rem}.mt-2{margin-top:0.5rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-16{height:4rem}.h-3\.5{height:0.875rem}.h-5{height:1.25rem}.h-8{height:2rem}.h-full{height:100%}.h-32{height:8rem}.max-h-\[30vh\]{max-height:30vh}.max-h-full{max-height:100%}.w-10{width:2.5rem}.w-12{width:3rem}.w-3\.5{width:0.875rem}.w-5{width:1.25rem}.w-8{width:2rem}.w-full{width:100%}.w-max{width:max-content}.w-1\.5{width:0.375rem}.min-w-0{min-width:0px}.max-w-\[90\%\]{max-width:90%}.max-w-md{max-width:28rem}.max-w-sm{max-width:24rem}.max-w-\[88\%\]{max-width:88%}.max-w-\[calc\(100\%-2\.75rem\)\]{max-width:calc(100% - 2.75rem)}.max-w-full{max-width:100%}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.resize-none{resize:none}.resize{resize:both}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.whitespace-pre-line{white-space:pre-line}.whitespace-pre-wrap{white-space:pre-wrap}.break-words{overflow-wrap:break-word}.break-keep{word-break:keep-all}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.rounded-bl-md{border-bottom-left-radius:0.375rem}.rounded-tl-md{border-top-left-radius:0.375rem}.rounded-tr-md{border-top-right-radius:0.375rem}.border{border-width:1px}.border-x{border-left-width:1px;border-right-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-sky-100{--tw-border-opacity:1;border-color:rgb(224 242 254 / var(--tw-border-opacity, 1))}.border-sky-200{--tw-border-opacity:1;border-color:rgb(186 230 253 / var(--tw-border-opacity, 1))}.border-sky-300{--tw-border-opacity:1;border-color:rgb(125 211 252 / var(--tw-border-opacity, 1))}.border-\[\#0284C7\]{--tw-border-opacity:1;border-color:rgb(2 132 199 / var(--tw-border-opacity, 1))}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.border-yellow-300{--tw-border-opacity:1;border-color:rgb(253 224 71 / var(--tw-border-opacity, 1))}.bg-\[\#0284C7\]{--tw-bg-opacity:1;background-color:rgb(2 132 199 / var(--tw-bg-opacity, 1))}.bg-\[\#F4FAFF\]{--tw-bg-opacity:1;background-color:rgb(244 250 255 / var(--tw-bg-opacity, 1))}.bg-emerald-100{--tw-bg-opacity:1;background-color:rgb(209 250 229 / var(--tw-bg-opacity, 1))}.bg-sky-100{--tw-bg-opacity:1;background-color:rgb(224 242 254 / var(--tw-bg-opacity, 1))}.bg-sky-50{--tw-bg-opacity:1;background-color:rgb(240 249 255 / var(--tw-bg-opacity, 1))}.bg-sky-50\/80{background-color:rgb(240 249 255 / 0.8)}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/60{background-color:rgb(15 23 42 / 0.6)}.bg-slate-900\/95{background-color:rgb(15 23 42 / 0.95)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/95{background-color:rgb(255 255 255 / 0.95)}.bg-\[\#FEE500\]{--tw-bg-opacity:1;background-color:rgb(254 229 0 / var(--tw-bg-opacity, 1))}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235 / var(--tw-bg-opacity, 1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-rose-100{--tw-bg-opacity:1;background-color:rgb(255 228 230 / var(--tw-bg-opacity, 1))}.bg-sky-400{--tw-bg-opacity:1;background-color:rgb(56 189 248 / var(--tw-bg-opacity, 1))}.bg-yellow-50{--tw-bg-opacity:1;background-color:rgb(254 252 232 / var(--tw-bg-opacity, 1))}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pb-10{padding-bottom:2.5rem}.pb-2\.5{padding-bottom:0.625rem}.pr-1{padding-right:0.25rem}.text-left{text-align:left}.text-center{text-align:center}.font-sans{font-family:-apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, 맑은 고딕, Noto Sans KR, Roboto, Helvetica Neue, Segoe UI, sans-serif}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[12px\]{font-size:12px}.text-\[15px\]{font-size:15px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}.font-normal{font-weight:400}.leading-relaxed{line-height:1.625}.leading-snug{line-height:1.375}.leading-tight{line-height:1.25}.text-\[\#0284C7\]{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-sky-700{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity, 1))}.text-sky-800{--tw-text-opacity:1;color:rgb(7 89 133 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-\[\#191919\]{--tw-text-opacity:1;color:rgb(25 25 25 / var(--tw-text-opacity, 1))}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-rose-700{--tw-text-opacity:1;color:rgb(190 18 60 / var(--tw-text-opacity, 1))}.text-sky-300{--tw-text-opacity:1;color:rgb(125 211 252 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.placeholder-slate-400::placeholder{--tw-placeholder-opacity:1;color:rgb(148 163 184 / var(--tw-placeholder-opacity, 1))}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.ease-in-out{transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1)}.hover\:bg-sky-50:hover{--tw-bg-opacity:1;background-color:rgb(240 249 255 / var(--tw-bg-opacity, 1))}.hover\:bg-sky-700:hover{--tw-bg-opacity:1;background-color:rgb(3 105 161 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-200:hover{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.hover\:bg-\[\#0284C7\]:hover{--tw-bg-opacity:1;background-color:rgb(2 132 199 / var(--tw-bg-opacity, 1))}.hover\:bg-sky-100:hover{--tw-bg-opacity:1;background-color:rgb(224 242 254 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.hover\:text-slate-600:hover{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.hover\:text-\[\#0284C7\]:hover{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.focus\:border-\[\#0284C7\]:focus{--tw-border-opacity:1;border-color:rgb(2 132 199 / var(--tw-border-opacity, 1))}.focus\:bg-white:focus{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.active\:scale-\[0\.99\]:active{--tw-scale-x:0.99;--tw-scale-y:0.99;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@media (max-width: 359px){.max-\[359px\]\:hidden{display:none}}@media (min-width: 380px){.min-\[380px\]\:px-4{padding-left:1rem;padding-right:1rem}}</style>
+</head>
+<body class="app-h flex justify-center overflow-hidden">
+
+  <!-- ================= 설정 영역 ================= -->
+  <script>
+    const CONFIG = {
+      PHONE: "010-4445-6432",                                   // 중개사 휴대폰 번호
+      LISTING_SITE_URL: "https://skylee-lang.github.io/wa-bang/", // 와방 매물 보는 사이트 주소
+      // 매물 시트 CSV (동네 버튼을 자동으로 만들 때 사용, 매물 사이트와 같은 주소)
+      KAKAO_OPENCHAT_URL: "https://open.kakao.com/o/sPQtqVTi",   // 오픈카톡 (요약 카드의 노란 버튼)
+      CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQvtWYASv36tk8-2ThheDiPSkCHeN_nc4FD99PDb5YFlMMKw_h9dGGMPadjPbUxKpu9zfuf8Tj3QJLY/pub?gid=2138382865&single=true&output=csv"
+    };
+  </script>
+  <!-- ============================================== -->
+
+  <!-- 모바일 퍼스트 중앙 컨테이너 -->
+  <div class="w-full max-w-md app-h bg-[#F4FAFF] shadow-2xl border-x border-sky-100 flex flex-col relative overflow-hidden">
+
+    <!-- 상단 고정 헤더 -->
+    <header class="shrink-0 bg-white/95 backdrop-blur-md border-b border-sky-100 z-20" style="padding-top: env(safe-area-inset-top);">
+      <div class="px-3 min-[380px]:px-4 h-16 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div class="w-10 h-10 rounded-2xl bg-[#0284C7] flex items-center justify-center shrink-0 shadow-sm">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
+              <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
+            </svg>
+          </div>
+          <div class="leading-tight min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-base font-extrabold text-slate-900 shrink-0">와방</span>
+            </div>
+            <div class="text-[11px] font-medium text-sky-700 truncate">공인중개사 이하늘 · 매물 접수 챗봇</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" onclick="restartChat()" title="처음부터 다시하기"
+            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-sky-800 border border-sky-300 text-[11px] font-bold shadow-sm transition">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
+            <span class="max-[359px]:hidden">초기화</span>
+          </button>
+          <button type="button" id="embedClose" onclick="postParent('close')" title="닫기"
+            class="hidden w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 items-center justify-center">
+            <i class="ph-bold ph-x text-sm"></i>
+          </button>
+          <a id="headerListingLink" href="https://skylee-lang.github.io/wa-bang/"
+            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0284C7] hover:bg-sky-700 text-white text-[11px] font-bold shadow-sm transition">
+            <i class="ph-fill ph-house-line text-xs"></i>
+            <span class="max-[359px]:hidden">매물보기</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 진행률 표시 바 -->
+      <div class="px-4 pb-2.5 bg-white/95">
+        <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 mb-1">
+          <span id="progressLabel">맞춤 매물 조건 접수 준비</span>
+          <span class="flex items-center gap-1.5">
+            <span id="matchPill" class="hidden px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-extrabold"></span>
+            <span id="progressCount" class="text-[#0284C7] font-bold">0 / 11</span>
+          </span>
+        </div>
+        <div class="w-full h-1.5 bg-sky-100 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-[#0284C7] rounded-full transition-all duration-300" style="width: 0%;"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 중앙 채팅 대화 영역 -->
+    <main id="chatScrollArea" class="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+      <div id="chatContainer" class="space-y-4 pb-10"></div>
+    </main>
+
+    <!-- 하단 빠른 선택 칩 & 텍스트 입력 바 -->
+    <footer id="inputArea" class="shrink-0 bg-white border-t border-sky-100 z-20" style="padding-bottom: env(safe-area-inset-bottom);">
+      <div class="px-4 py-3 space-y-2.5">
+        <div id="quickChipsContainer" class="flex flex-wrap gap-1.5 max-h-[30vh] overflow-y-auto no-scrollbar"></div>
+
+        <div id="multiSelectBar" class="hidden flex items-center justify-between bg-sky-50 px-3 py-2 rounded-xl border border-sky-200">
+          <span id="multiSelectCount" class="text-xs font-bold text-[#0284C7]">0개 선택됨</span>
+          <button type="button" onclick="confirmMultiSelect()"
+            class="px-3.5 py-1.5 rounded-lg bg-[#0284C7] text-white text-xs font-bold shadow-sm hover:bg-sky-700 transition">
+            다음 <i class="ph-bold ph-arrow-right ml-0.5"></i>
+          </button>
+        </div>
+
+        <button type="button" id="skipBtn" onclick="skipRest()"
+          class="hidden w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] transition">
+          나머지 건너뛰고 매물 보기 <span id="skipCount" class="text-emerald-300"></span> <i class="ph-bold ph-arrow-right"></i>
+        </button>
+
+        <form id="chatForm" onsubmit="handleFormSubmit(event)" class="flex items-center gap-2">
+          <button type="button" id="prevStepBtn" onclick="goPrevStep()" title="이전 질문으로"
+            class="hidden shrink-0 w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+            <i class="ph-bold ph-arrow-u-up-left text-base"></i>
+          </button>
+          <input id="userInput" type="text" autocomplete="off" placeholder="답변을 입력하거나 위 버튼을 눌러주세요..."
+            class="flex-1 min-w-0 px-4 py-2.5 rounded-2xl bg-sky-50/80 border border-sky-200 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0284C7] focus:bg-white transition" />
+          <button type="submit"
+            class="shrink-0 w-10 h-10 rounded-2xl bg-[#0284C7] hover:bg-sky-700 active:scale-95 text-white flex items-center justify-center shadow-sm transition">
+            <i class="ph-fill ph-paper-plane-right text-base"></i>
+          </button>
+        </form>
+      </div>
+    </footer>
+
+    <!-- 상단 토스트 알림 메시지 -->
+    <div id="toast" class="absolute top-24 left-1/2 -translate-x-1/2 z-[60] hidden px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 w-max max-w-[90%]">
+      <i class="ph-fill ph-check-circle text-emerald-400 text-base shrink-0"></i>
+      <span id="toastText" class="leading-snug">복사되었습니다!</span>
+    </div>
+
+    <!-- 전송 후 후속 행동 선택 모달 -->
+    <div id="afterSendModal" class="absolute inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl max-w-sm w-full max-h-full overflow-y-auto p-5 space-y-4 shadow-2xl msg-anim border border-sky-100">
+        <div class="text-center space-y-2">
+          <div class="w-12 h-12 rounded-2xl bg-sky-50 text-[#0284C7] flex items-center justify-center mx-auto text-2xl shadow-sm">
+            <i class="ph-fill ph-paper-plane-tilt"></i>
+          </div>
+          <h3 id="modalTitle" class="text-base font-extrabold text-slate-900">문의 내용이 복사되었습니다!</h3>
+          <p id="modalDesc" class="text-xs text-slate-500 leading-relaxed">
+            열린 채팅창에 <b>붙여넣기(길게 누르기 → 붙여넣기)</b> 후 전송해 주세요.<br/>
+            전송을 마치셨다면 아래에서 다음 단계를 선택해 주세요!
+          </p>
+        </div>
+
+        <div class="text-center">
+          <button type="button" onclick="hideAfterSendModal()" class="text-[11px] text-slate-400 hover:text-slate-600 underline">
+            요약 화면으로 돌아가기
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ================= 챗봇 질문 시나리오 (11단계) =================
+    // 질문 5개: 입주 시기(중개사 우선순위) → 구조 → 예산 → 꼭 필요한 조건 → 동네
+    const STEPS = [
+      {
+        key: "moveInDate",
+        label: "입주 시기",
+        question: "언제 입주하실 예정이세요? 📅",
+        placeholder: "예: 12월 초, 3월 중순 등 직접 입력",
+        chips: ["즉시 입주", "1개월 이내", "2~3개월 후", "아직 미정"]
+      },
+      {
+        key: "structure",
+        label: "구조",
+        question: "어떤 <b>구조</b>를 찾으세요? 🏠",
+        placeholder: "예: 복층 원룸, 분리형 원룸 등 직접 입력",
+        chips: ["원룸", "투룸", "쓰리룸", "오피스텔", "아파트", "상가"]
+      },
+      {
+        key: "budget",
+        label: "예산",
+        question: "<b>예산</b>은요? 💰 <span class='text-xs text-slate-400 font-normal'>(보증금/월세, 만원)</span>",
+        placeholder: "예: 1000/70, 전세 2억",
+        chips: ["500/50 이하", "1000/60 이하", "1000/80 이하", "2000/100 이하", "전세", "매매"]
+      },
+      {
+        key: "needs",
+        label: "꼭 필요한 조건",
+        question: "<b>꼭 필요한 조건</b>을 모두 골라주세요 ✨ <span class='text-xs text-slate-400 font-normal'>(여러 개 가능)</span>",
+        placeholder: "그 밖에 꼭 필요한 조건이 있으면 적어주세요",
+        multiSelect: true,
+        chips: ["🐶 강아지", "🐱 고양이", "🚗 주차", "풀옵션", "역세권", "신축급", "없어요"]
+      },
+      {
+        key: "location",
+        label: "동네",
+        question: "어느 <b>동네</b>가 좋으세요? 📍",
+        placeholder: "예: 서면역 근처, 부산대 앞 등 직접 입력",
+        chips: ["상관없어요"]   // 매물 시트에서 매물이 많은 동네를 자동으로 앞에 붙임
+      }
+    ];
+    const SKIP_FROM = 4;   // 4번째(꼭 필요한 조건)까지 답하면 '건너뛰고 매물 보기' 표시 (매물 사이트 안에서만)
+
+    // 예산·필요조건 답을 매물 사이트/중개사 화면이 쓰는 항목(보증금·월세·반려동물·주차·옵션)으로 풀어둠
+    function deriveAnswers() {
+      ["deposit", "monthlyRent", "pet", "parking", "options"].forEach(k => delete answers[k]);
+      const b = String(answers.budget || "").replace(/,/g, "").trim();
+      if (b) {
+        if (/전세|매매/.test(b)) answers.monthlyRent = b;
+        else {
+          const m = b.match(/(\d+(?:\.\d+)?\s*(?:억\s*\d*\s*천?|천)?)\s*(?:만원?)?\s*\/\s*(\d+(?:\.\d+)?)/);
+          const ns = b.match(/\d+(?:\.\d+)?/g) || [];
+          if (m) { answers.deposit = m[1].replace(/\s/g, "") + (/억|천/.test(m[1]) ? "" : "만원"); answers.monthlyRent = m[2] + "만원 " + (/이상/.test(b) ? "이상" : "이하"); }
+          else if (ns.length >= 2) { answers.deposit = ns[0] + "만원"; answers.monthlyRent = ns[1] + "만원 이하"; }
+          else answers.monthlyRent = b;
+        }
+      }
+      const n = String(answers.needs || "");
+      if (n) {
+        const pets = [/강아지/.test(n) && "강아지", /고양이/.test(n) && "고양이"].filter(Boolean);
+        answers.pet = pets.length ? pets.join("·") : "없음";
+        if (/주차/.test(n)) answers.parking = "필요";
+        const opt = n.split(/,\s*/).map(x => x.replace(/^[^\w가-힣]+/, "").trim()).filter(x => x && !/강아지|고양이|주차|없어요/.test(x));
+        if (opt.length) answers.options = opt.join(", ");
+      }
+    }
+
+    // 매물 시트에서 매물이 많은 동네 top 6 → '동네' 질문 버튼으로 (손님이 타자 안 쳐도 되게)
+    let AREA_CHIPS = [];
+    (async function loadAreaChips() {
+      try {
+        if (!CONFIG.CSV_URL) return;
+        const t = (await (await fetch(CONFIG.CSV_URL + "&t=" + Date.now())).text()).replace(/^\uFEFF/, "");
+        const rows = []; let row = [], cur = "", q = false;
+        for (let i = 0; i < t.length; i++) { const c = t[i];
+          if (q) { if (c === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+          else if (c === '"') q = true; else if (c === ",") { row.push(cur); cur = ""; }
+          else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; row.push(cur); cur = ""; rows.push(row); row = []; } else cur += c; }
+        if (cur || row.length) { row.push(cur); rows.push(row); }
+        const h = (rows[0] || []).map(x => x.replace(/\s/g, "")), ai = h.indexOf("지역"), si = h.indexOf("상태");
+        if (ai < 0) return;
+        const cnt = {};
+        rows.slice(1).forEach(r => { if (si >= 0 && /완료|삭제/.test(r[si] || "")) return;
+          const parts = String(r[ai] || "").trim().split(/\s+/), d = parts[parts.length - 1]; if (d) cnt[d] = (cnt[d] || 0) + 1; });
+        AREA_CHIPS = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([d]) => d);
+        const loc = STEPS.find(s => s.key === "location");
+        loc.chips = [...AREA_CHIPS, "상관없어요"];
+        if (STEPS[currentStepIdx] === loc) renderQuickChips(loc.chips, false);
+      } catch (e) {}
+    })();
+
+    // ================= 내장 브라우저(카톡/인스타 안) 감지 =================
+    const UA = navigator.userAgent;
+    const IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const IN_KAKAO = /KAKAOTALK/i.test(UA);
+    const IN_APP = IN_KAKAO || /Instagram|FBAN|FBAV|NAVER|Line\/|DaumApps/i.test(UA);
+    // 아이폰 내장 브라우저에서만 안내 (입력 전에 미리 알려야 입력 내용이 안 날아감)
+    // ================= 매물 사이트 안에 '와방 도우미'로 들어간 경우 =================
+    const EMBED = new URLSearchParams(location.search).has("embed") && window.parent !== window;
+    function postParent(type, extra) {
+      if (!EMBED) return;
+      try { window.parent.postMessage(Object.assign({ wabang: true, type, answers }, extra || {}), location.origin); } catch (e) {}
+    }
+    let lastMatchCount = null;
+    window.addEventListener("message", (e) => {
+      if (e.origin !== location.origin || !e.data || !e.data.wabang) return;
+      if (e.data.type === "count") {
+        lastMatchCount = e.data.n;
+        const pill = document.getElementById("matchPill");
+        pill.textContent = `맞는 매물 ${e.data.n}개`;
+        pill.classList.toggle("hidden", !Object.keys(answers).length);
+        pill.className = pill.className.replace(/bg-\S+ text-\S+/, e.data.n ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700");
+        const sc = document.getElementById("skipCount");
+        if (sc) sc.textContent = `(${e.data.n}개)`;
+        const btnN = document.getElementById("embedDoneLabel");
+        if (btnN) btnN.textContent = doneLabel(e.data.n);
+      }
+      // 매물 화면에 이미 적용된 조건이 있으면 불러와서 바로 수정할 수 있게
+      if (e.data.type === "prefill" && e.data.answers && currentStepIdx === -1 && !Object.keys(answers).length) {
+        answers = Object.assign({}, e.data.answers);
+        (async () => {
+          await appendBotMessage("전에 알려주신 조건을 불러왔어요. 바꾸고 싶은 항목은 <b>'수정하기'</b>를 눌러주세요.", 100);
+          STEPS.forEach((st, i) => { if (answers[st.key]) appendUserMessage(`${st.label}: ${answers[st.key]}`, i); });
+          currentStepIdx = STEPS.length;
+          finishEmbedded(150);
+        })();
+      }
+    });
+    if (EMBED) {
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("headerListingLink").classList.add("hidden");
+        const c = document.getElementById("embedClose"); c.classList.remove("hidden"); c.classList.add("inline-flex");
+      });
+    }
+
+    function buildInAppNotice() {
+      return "";   // 복사·붙여넣기를 더 이상 쓰지 않아서 카톡/인스타 안 브라우저 경고 불필요
+      const href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href.split("#")[0]);
+      return `\n\n<div class='mt-2 rounded-xl bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-800 leading-snug break-keep'><b>⚠️ 먼저 확인해 주세요!</b><br/>지금 카톡/인스타 안에서 열려 있어요. 이 상태로는 마지막에 앱 이동·복사가 안 될 수 있고, 나중에 다시 열면 입력한 내용이 사라져요.<br/>${IN_KAKAO ? `<a href='${href}' class='mt-2 block text-center py-2 rounded-lg bg-amber-500 text-white font-extrabold'>기본 브라우저(Safari)로 다시 열기</a>` : "<b>화면 아래(또는 위)의 ⋯ → 'Safari로 열기'</b>를 눌러 다시 열어주세요."}</div>`;
+    }
+
+    // ================= 상태 관리 =================
+    let currentStepIdx = -1;
+    let answers = {};
+    let selectedMultiOptions = [];
+    let isCompleted = false;
+    let editReturn = false;
+
+    // 평소에는 CSS(100dvh)로 화면을 꽉 채우고, 키보드가 올라와 화면이 줄어들 때만 그 높이에 맞춤
+    function fitViewport() {
+      const vv = window.visualViewport;
+      const keyboardOpen = vv && (window.innerHeight - vv.height) > 120;
+      if (keyboardOpen) {
+        document.documentElement.style.setProperty("--app-h", Math.round(vv.height) + "px");
+      } else {
+        document.documentElement.style.removeProperty("--app-h"); // 다시 100dvh로 (전체 화면)
+      }
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener("resize", fitViewport);
+    window.addEventListener("orientationchange", () => setTimeout(fitViewport, 200));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", () => { fitViewport(); scrollToBottom(); });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fitViewport();
+      startGreeting();
+    });
+
+    function scrollToBottom() {
+      const area = document.getElementById("chatScrollArea");
+      if (!area) return;
+      requestAnimationFrame(() => {
+        area.scrollTop = area.scrollHeight;
+      });
+      setTimeout(() => {
+        area.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
+      }, 100);
+    }
+
+    function updateProgress() {
+      const total = STEPS.length;
+      const done = isCompleted ? total : Math.max(0, currentStepIdx);
+      const pct = Math.round((done / total) * 100);
+
+      document.getElementById("progressBar").style.width = `${pct}%`;
+      document.getElementById("progressCount").textContent = `${done} / ${total}`;
+      document.getElementById("progressLabel").textContent = isCompleted
+        ? "모든 조건 접수 완료!"
+        : currentStepIdx < 0
+          ? "맞춤 매물 조건 접수 준비"
+          : `${(STEPS[currentStepIdx] || {}).label || ""} 입력 중`;
+
+      const skipBtn = document.getElementById("skipBtn");
+      const canSkip = EMBED && !isCompleted && currentStepIdx >= SKIP_FROM && currentStepIdx < STEPS.length;
+      skipBtn.classList.toggle("hidden", !canSkip);
+      skipBtn.classList.toggle("flex", canSkip);
+      const prevBtn = document.getElementById("prevStepBtn");
+      if (currentStepIdx > 0 && !isCompleted) {
+        prevBtn.classList.remove("hidden");
+      } else {
+        prevBtn.classList.add("hidden");
+      }
+    }
+
+    // ================= 말풍선 렌더링 =================
+    function appendBotMessage(htmlContent, delay = 220) {
+      return new Promise((resolve) => {
+        const container = document.getElementById("chatContainer");
+
+        const typingId = `typing_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        const typingEl = document.createElement("div");
+        typingEl.id = typingId;
+        typingEl.className = "flex items-end gap-2.5 msg-anim";
+        typingEl.innerHTML = `
+          <div class="w-8 h-8 rounded-2xl bg-[#0284C7] text-white flex items-center justify-center shrink-0 shadow-sm text-sm">
+            <i class="ph-fill ph-paw-print"></i>
+          </div>
+          <div class="bg-white border border-sky-100 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-400 typing-dot"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-400 typing-dot"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-400 typing-dot"></span>
+          </div>
+        `;
+        container.appendChild(typingEl);
+        scrollToBottom();
+
+        setTimeout(() => {
+          const t = document.getElementById(typingId);
+          if (t) t.remove();
+
+          const msgEl = document.createElement("div");
+          msgEl.className = "flex items-start gap-2.5 msg-anim";
+          msgEl.innerHTML = `
+            <div class="w-8 h-8 rounded-2xl bg-[#0284C7] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 text-sm">
+              <i class="ph-fill ph-paw-print"></i>
+            </div>
+            <div class="max-w-[calc(100%-2.75rem)] min-w-0 space-y-1">
+              <div class="text-[11px] font-bold text-slate-500 ml-1">와방 매니저</div>
+              <div class="bg-white border border-sky-100 text-slate-800 text-sm px-4 py-3 rounded-2xl rounded-tl-md shadow-sm leading-relaxed whitespace-pre-line break-words">${htmlContent}</div>
+            </div>
+          `;
+          container.appendChild(msgEl);
+          scrollToBottom();
+          resolve(msgEl);
+        }, delay);
+      });
+    }
+
+    function appendUserMessage(text, stepIdxToEdit = null) {
+      const container = document.getElementById("chatContainer");
+      const msgEl = document.createElement("div");
+      msgEl.className = "flex justify-end msg-anim";
+      msgEl.innerHTML = `
+        <div class="max-w-[88%] min-w-0 flex flex-col items-end gap-1">
+          <div class="bg-[#0284C7] text-white text-sm font-medium px-4 py-2.5 rounded-2xl rounded-tr-md shadow-sm leading-relaxed break-keep break-words">${escapeHtml(text)}</div>
+          ${stepIdxToEdit !== null ? `<button type="button" onclick="editFromStep(${stepIdxToEdit})" class="text-[11px] text-slate-400 hover:text-[#0284C7] underline pr-1">수정하기</button>` : ""}
+        </div>
+      `;
+      container.appendChild(msgEl);
+      scrollToBottom();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ================= 챗봇 대화 흐름 제어 =================
+    async function startGreeting() {
+      currentStepIdx = -1;
+      answers = {};
+      selectedMultiOptions = [];
+      isCompleted = false;
+      editReturn = false;
+      document.getElementById("chatContainer").innerHTML = "";
+      document.getElementById("inputArea").classList.remove("hidden");
+      hideAfterSendModal();
+      const hl = document.getElementById("headerListingLink");
+      if (hl) hl.href = CONFIG.LISTING_SITE_URL;
+      if (window.__chatStarted) postParent("progress");   // '초기화'를 눌렀을 때만 매물 화면 조건도 초기화
+      window.__chatStarted = true;
+      // 매물 화면에 이미 조건이 있으면 인사 대신 그 조건을 불러옴 (prefill 메시지 대기)
+      if (EMBED && !window.__greeted && new URLSearchParams(location.search).has("prefill")) { window.__greeted = true; return; }
+      window.__greeted = true;
+      updateProgress();
+
+      // 인사와 첫 질문을 바로 이어서 (시작 버튼 없이)
+      await appendBotMessage(
+        (EMBED
+          ? "어떤 방 찾으세요? 🐾\n5가지만 누르면 맞는 매물만 골라드려요."
+          : "안녕하세요, <b>와방 이하늘</b>입니다 🏡\n1분이면 딱 맞는 방 찾아드려요!" + buildInAppNotice()),
+        220
+      );
+      goToStep(0);
+    }
+
+    function restartChat() {
+      startGreeting();
+    }
+
+    async function goToStep(idx) {
+      currentStepIdx = idx;
+      selectedMultiOptions = [];
+
+      // 마지막 질문 다음이면 진행률 갱신 전에 바로 완료 처리 (STEPS[12]가 없어서 에러 나던 부분)
+      if (idx >= STEPS.length) {
+        await finishConversation();
+        return;
+      }
+      updateProgress();
+
+      const step = STEPS[idx];
+      document.getElementById("userInput").value = "";
+      document.getElementById("userInput").placeholder = step.placeholder || "답변을 입력해 주세요...";
+      renderQuickChips(step.chips || [], !!step.multiSelect);
+
+      await appendBotMessage(step.question, 220);
+    }
+
+    function goPrevStep() {
+      if (currentStepIdx > 0 && !isCompleted) {
+        appendUserMessage("이전 질문으로 돌아갈게요");
+        goToStep(currentStepIdx - 1);
+      }
+    }
+
+    function editFromStep(stepIdx) {
+      editReturn = true;
+      isCompleted = false;
+      document.getElementById("inputArea").classList.remove("hidden");
+      appendUserMessage(`'${STEPS[stepIdx].label}' 항목을 다시 입력할게요`);
+      goToStep(stepIdx);
+    }
+
+    // ================= 빠른 선택 칩 & 입력 처리 =================
+    function renderQuickChips(chips, isMulti) {
+      const wrap = document.getElementById("quickChipsContainer");
+      const multiBar = document.getElementById("multiSelectBar");
+
+      if (!isMulti) {
+        multiBar.classList.add("hidden");
+        wrap.innerHTML = chips.map(chip => `
+          <button type="button" onclick="handleChipClick('${chip.replace(/'/g, "\\'")}')"
+            class="px-3.5 py-2 rounded-full bg-sky-50 hover:bg-[#0284C7] text-[#0284C7] hover:text-white border border-sky-200 text-xs font-bold transition max-w-full text-left leading-snug">
+            ${chip}
+          </button>
+        `).join("");
+      } else {
+        multiBar.classList.remove("hidden");
+        updateMultiBarText();
+        wrap.innerHTML = chips.map(chip => {
+          const active = selectedMultiOptions.includes(chip);
+          return `
+            <button type="button" onclick="toggleMultiChip('${chip.replace(/'/g, "\\'")}')"
+              class="px-3.5 py-2 rounded-full text-xs font-bold border transition max-w-full text-left leading-snug ${
+                active
+                  ? "bg-[#0284C7] text-white border-[#0284C7] shadow-sm"
+                  : "bg-sky-50 text-[#0284C7] border-sky-200 hover:bg-sky-100"
+              }">
+              ${active ? "✓ " : "+ "}${chip}
+            </button>
+          `;
+        }).join("");
+      }
+    }
+
+    function toggleMultiChip(chip) {
+      if (chip === "없어요") { selectedMultiOptions = []; submitAnswer("없어요"); return; }
+      {
+        selectedMultiOptions = selectedMultiOptions.filter(c => c !== "없어요");
+        const idx = selectedMultiOptions.indexOf(chip);
+        if (idx >= 0) selectedMultiOptions.splice(idx, 1);
+        else selectedMultiOptions.push(chip);
+      }
+      const step = STEPS[currentStepIdx];
+      renderQuickChips(step.chips || [], true);
+    }
+
+    function updateMultiBarText() {
+      document.getElementById("multiSelectCount").textContent = `${selectedMultiOptions.length}개 선택됨`;
+    }
+
+    function confirmMultiSelect() {
+      const customVal = document.getElementById("userInput").value.trim();
+      const combined = [...selectedMultiOptions];
+      if (customVal) combined.push(customVal);
+
+      const finalAnswer = combined.length > 0 ? combined.join(", ") : "없어요";
+      submitAnswer(finalAnswer);
+    }
+
+    function handleChipClick(value) {
+      if (currentStepIdx === -1) {
+        appendUserMessage(value);
+        goToStep(0);
+        return;
+      }
+      submitAnswer(value);
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const inputEl = document.getElementById("userInput");
+      const val = inputEl.value.trim();
+
+      if (currentStepIdx === -1) return;   // 인사 중에는 첫 질문이 뜰 때까지 대기
+
+      const step = STEPS[currentStepIdx];
+      if (step && step.multiSelect) {
+        confirmMultiSelect();
+        return;
+      }
+
+      if (!val) return;
+      submitAnswer(val);
+    }
+
+    function submitAnswer(value) {
+      const step = STEPS[currentStepIdx];
+      if (!step) return;
+      answers[step.key] = value;
+      deriveAnswers();
+      postParent("progress");
+      document.getElementById("userInput").value = "";
+      appendUserMessage(value, currentStepIdx);
+      if (editReturn) {
+        editReturn = false;
+        const next = STEPS.findIndex(st => !answers[st.key]);
+        goToStep(next === -1 ? STEPS.length : next);
+        return;
+      }
+      goToStep(currentStepIdx + 1);
+    }
+
+    // ================= 완료 요약 카드 생성 및 전송 액션 =================
+    function buildFormattedSummaryText() {
+      return [
+        "[와방 · 맞춤 매물 문의 접수]",
+        `• 입주 시기: ${answers.moveInDate || "-"}`,
+        `• 구조: ${answers.structure || "-"}`,
+        `• 예산(보증금/월세): ${answers.budget || "-"}`,
+        `• 꼭 필요한 조건: ${answers.needs || "-"}`,
+        `• 동네: ${answers.location || "-"}`
+      ].join("\n");
+    }
+
+    const doneLabel = n => n === 0 ? "조건 넓히기 제안 보러가기" : `맞는 매물 ${n ?? ""}개 보러가기`;
+    function skipRest() {
+      if (isCompleted) return;
+      appendUserMessage("나머지 질문은 건너뛸게요");
+      goToStep(STEPS.length);
+    }
+    // 건너뛴 질문을 이어서 답하기 (답하면 다음 빈 질문으로 이어짐)
+    function resumeSkipped() {
+      const first = STEPS.findIndex(st => !answers[st.key]);
+      if (first < 0) return;
+      isCompleted = false;
+      editReturn = true;
+      document.getElementById("inputArea").classList.remove("hidden");
+      document.getElementById("summaryCard")?.remove();
+      appendUserMessage("건너뛴 질문도 답할게요");
+      goToStep(first);
+    }
+
+    // 조건을 복사한 뒤 오픈카톡으로 (아이폰 포함). 터치 직후 동기적으로 실행해야 아이폰에서 막히지 않음
+    function copyText(text) {
+      let ok = false;
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0.01;font-size:16px;";
+      document.body.appendChild(ta);
+      try { ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, text.length); // 아이폰은 select()만으론 선택 안 됨
+        ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      try { window.getSelection().removeAllRanges(); } catch (e) {}
+      if (ok) return Promise.resolve(true);
+      try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) {}
+      return Promise.resolve(false);
+    }
+    // 1단계: 누르면 복사 → 2단계: 복사 확인 후 '오픈카톡 열기' (한 번에 하면 앱 이동 때문에 복사가 끊기는 경우가 있음)
+    const PC_PASTE = !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !(navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    // 휴대폰 공유하기: 공유 창에서 카톡 채팅방을 고르면 글이 바로 들어감 (복사·붙여넣기 불필요)
+    const CAN_SHARE = !PC_PASTE && typeof navigator.share === "function";
+    function shareSummary(btn) {
+      const text = buildFormattedSummaryText();
+      copyText(text); // 공유 앱이 글을 안 받는 경우 대비
+      navigator.share({ title: "와방 조건", text })
+        .then(() => showToast("보냈어요! 중개사가 확인하면 연락드려요 🙌"))
+        .catch(e => { if (e && e.name === "AbortError") return; copyForKakao(btn); });
+    }
+    function copyForKakao(btn) {
+      const text = buildFormattedSummaryText();
+      copyText(text).then(ok => {
+        const card = btn && btn.closest("#summaryCard");
+        if (!card) return;
+        card.querySelector("#kakaoStep")?.remove();
+        const box = document.createElement("div");
+        box.id = "kakaoStep";
+        box.className = "rounded-2xl border border-yellow-300 bg-yellow-50 p-3 space-y-2";
+        const paste = PC_PASTE ? "<b>Ctrl+V</b>(맥은 ⌘+V)" : "입력창을 <b>길게 눌러 '붙여넣기'</b>";
+        box.innerHTML = (ok
+          ? `<div class="text-xs font-extrabold text-slate-900">✅ 조건이 복사됐어요</div>
+             <div class="text-[11px] text-slate-600 leading-relaxed">아래 버튼으로 오픈카톡을 열고 ${paste} 한 뒤 전송해 주세요.</div>`
+          : `<div class="text-xs font-extrabold text-slate-900">복사를 한 번만 도와주세요</div>
+             <div class="text-[11px] text-slate-600 leading-relaxed">이 브라우저가 자동 복사를 막았어요. 아래 글을 ${PC_PASTE ? "Ctrl+A → <b>Ctrl+C</b>" : "<b>길게 눌러 '전체 선택' → '복사'</b>"} 해 주세요.</div>
+             <textarea readonly class="w-full h-32 p-2 rounded-xl bg-white border border-slate-200 text-[12px] text-slate-700 resize-none">${escapeHtml(text)}</textarea>`)
+          + `<a href="${CONFIG.KAKAO_OPENCHAT_URL}" target="_blank" rel="noopener noreferrer"
+               class="w-full py-3 rounded-xl bg-[#FEE500] text-[#191919] text-sm font-extrabold flex items-center justify-center gap-1.5 shadow-sm">
+               <i class="ph-fill ph-chat-teardrop-text"></i>오픈카톡 열고 붙여넣기</a>`;
+        btn.closest(".grid").after(box);
+        const ta = box.querySelector("textarea");
+        if (ta) setTimeout(() => { try { ta.focus(); ta.setSelectionRange(0, ta.value.length); } catch (e) {} }, 50);
+        box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
+
+    // 매물 사이트 안(도우미)에서 끝났을 때: 요약 + '맞는 매물 보기' 버튼 → 시트 닫고 목록으로
+    async function finishEmbedded(delay) {
+      isCompleted = true;
+      updateProgress();
+      document.getElementById("inputArea").classList.add("hidden");
+      const old = document.getElementById("summaryCard");
+      if (old) old.remove();
+      postParent("progress");
+      await appendBotMessage(lastMatchCount === 0
+        ? "조건 정리 끝! 🎉\n지금 조건에 <b>딱 맞는 매물은 아직 없어요.</b> 매물 화면에서 <b>조금만 넓히면 몇 개가 더 나오는지</b> 알려드릴게요. 조건만 먼저 보내주셔도 맞는 매물이 생기면 연락드려요!"
+        : "조건 정리 끝! 🎉\n뒤의 매물 목록에 <b>모두 적용</b>해 뒀어요. 마음에 드는 매물을 <b>♡ 담기</b> 한 뒤 <b>'중개사에게 보내기'</b>를 누르시면 이 조건도 함께 전달돼요.", delay);
+      const card = document.createElement("div");
+      card.id = "summaryCard";
+      card.className = "msg-anim bg-white rounded-3xl border border-sky-200 shadow-md p-4 space-y-3";
+      card.innerHTML = `
+        <pre class="text-xs text-slate-700 bg-sky-50/80 p-3 rounded-2xl border border-sky-100 whitespace-pre-wrap break-words font-sans leading-relaxed">${escapeHtml(buildFormattedSummaryText().split("\n").slice(1).filter(l => !/: -$/.test(l)).join("\n"))}</pre>
+        <button type="button" onclick="postParent('done')"
+          class="w-full py-4 rounded-2xl bg-slate-900 text-white font-extrabold text-[15px] flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition">
+          <i class="ph-fill ph-house-line text-xl text-sky-300"></i><span id="embedDoneLabel">${doneLabel(lastMatchCount)}</span>
+        </button>
+        ${STEPS.some(st => !answers[st.key]) ? `<button type="button" onclick="resumeSkipped()" class="w-full py-2.5 rounded-xl bg-sky-50 border border-sky-200 text-[#0284C7] text-xs font-bold">건너뛴 질문 이어서 답하기 (방 볼 날짜 등)</button>` : ""}
+        <p class="text-[11px] text-slate-400 text-center">조건을 바꾸려면 위 답변의 '수정하기'를 눌러주세요</p>`;
+      document.getElementById("chatContainer").appendChild(card);
+      scrollToBottom();
+    }
+
+    // 챗봇 답변을 매물 사이트 주소에 담아서 넘김 → 매물 사이트가 조건을 자동으로 필터에 적용
+    function buildListingHref() {
+      const base = CONFIG.LISTING_SITE_URL;
+      return base + (base.includes("?") ? "&" : "?") + "chat=" + encodeURIComponent(JSON.stringify(answers));
+    }
+
+    async function finishConversation(delay = 250) {
+      if (EMBED) return finishEmbedded(delay);
+      isCompleted = true;
+      updateProgress();
+      document.getElementById("inputArea").classList.add("hidden");
+
+      const oldCard = document.getElementById("summaryCard");
+      const again = !!oldCard;
+      if (oldCard) oldCard.remove();
+
+      const thanksEl = await appendBotMessage(
+        again
+          ? "수정하신 내용으로 다시 정리했어요! ✅"
+          : "정리 끝! 🎉\n아래 버튼을 누르면 <b>조건에 맞는 매물만</b> 보여드려요. 마음에 드는 매물을 ♡ 담아서 중개사에게 보내주세요.",
+        delay
+      );
+      const listingHref = buildListingHref();
+      const headerLink = document.getElementById("headerListingLink");
+      if (headerLink) headerLink.href = listingHref;
+
+      // 복사·붙여넣기 없이: 매물 보기(기본) / 문자로 조건만 보내기(번호·내용 자동 입력)
+      const summaryText = buildFormattedSummaryText();
+      const phone = (CONFIG.PHONE || "").replace(/[^0-9+]/g, "");
+      const smsHref = `sms:${phone}${IS_IOS ? "&" : "?"}body=${encodeURIComponent(summaryText)}`;
+
+      const container = document.getElementById("chatContainer");
+      const cardEl = document.createElement("div");
+      cardEl.id = "summaryCard";
+      cardEl.className = "msg-anim bg-white rounded-3xl border border-sky-200 shadow-md p-4 space-y-3";
+      cardEl.innerHTML = `
+        <pre class="text-xs text-slate-700 bg-sky-50/80 p-3 rounded-2xl border border-sky-100 whitespace-pre-wrap break-words font-sans leading-relaxed">${escapeHtml(summaryText.split("\n").slice(1).filter(l => !/: -$/.test(l)).join("\n"))}</pre>
+        <a href="${escapeHtml(listingHref)}"
+          class="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[15px] flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition">
+          <i class="ph-fill ph-house-line text-xl text-sky-300"></i>내 조건에 맞는 매물 보기 <i class="ph-bold ph-arrow-right"></i>
+        </a>
+        <button type="button" onclick="copyForKakao(this)"
+          class="w-full py-3 rounded-2xl bg-[#FEE500] text-[#191919] text-sm font-extrabold flex items-center justify-center gap-1.5 shadow-sm">
+          <i class="ph-fill ph-chat-teardrop-text text-lg"></i>조건만 오픈카톡으로 보내기</button>
+        <div class="grid ${CAN_SHARE ? "grid-cols-2" : "grid-cols-1"} gap-2">
+          ${CAN_SHARE ? `<button type="button" onclick="shareSummary(this)"
+            class="py-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs font-bold flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-share-network"></i>공유하기</button>` : ""}
+          <a href="${smsHref}"
+            class="py-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs font-bold flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-chat-circle-dots"></i>문자로
+          </a>
+        </div>
+        <button type="button" onclick="restartChat()" class="w-full text-[11px] text-slate-400 underline">처음부터 다시</button>`;
+      container.appendChild(cardEl);
+
+      // 요약 카드 맨 아래가 아니라, 위의 '감사합니다!' 안내 문구가 화면 맨 위에 보이도록 스크롤
+      setTimeout(() => {
+        const area = document.getElementById("chatScrollArea");
+        if (!area || !thanksEl) return;
+        const gap = thanksEl.getBoundingClientRect().top - area.getBoundingClientRect().top;
+        area.scrollTo({ top: area.scrollTop + gap - 8, behavior: "smooth" });
+      }, 200);
+    }
+
+    // ================= 후속 행동 모달 =================
+    const DEFAULT_MODAL_DESC = '열린 채팅창에 <b>붙여넣기(길게 누르기 → 붙여넣기)</b> 후 전송해 주세요.<br/>전송을 마치셨다면 아래에서 다음 단계를 선택해 주세요!';
+
+    function showAfterSendModal(titleText, descText) {
+      const modal = document.getElementById("afterSendModal");
+      document.getElementById("modalTitle").textContent = titleText || "문의 내용이 복사되었습니다!";
+      document.getElementById("modalDesc").innerHTML = descText ? escapeHtml(descText) : DEFAULT_MODAL_DESC;
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function hideAfterSendModal() {
+      const modal = document.getElementById("afterSendModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastText").textContent = msg;
+      toast.classList.remove("hidden");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
